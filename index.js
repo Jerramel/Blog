@@ -8,9 +8,12 @@ const _ = require("lodash");
 // required to access the Weather API
 const https = require("https");
 
+
+
 const homeStartingContent = "Introductory content for my blog. This is the starting page for my daily journal.";
 const aboutContent = "This page describes what the blog is all about and some information about myself.";
 const contactContent = "Brief information about how to contact me via social media.";
+const weatherContent = "Information about the weather of the city";
 
 const app = express();
 
@@ -35,6 +38,54 @@ app.get("/about", function(req, res){
 app.get("/contact", function(req, res){
   res.render("contact", {contactContent: contactContent});
 });
+
+app.get("/weather", function(req, res){
+  res.render("weather", {weatherContent: weatherContent});
+
+//start
+app.get("/weather", function(req, res) {
+  res.sendFile(__dirname + "/index.html")
+});
+
+app.post("/", function(req, res) {
+    
+    // takes in the zip from the html form, display in // console. Takes in as string, ex. for zip 02139
+        var cityname = String(req.body.cityInput);
+        console.log(req.body.cityInput);
+    
+    //build up the URL for the JSON query, API Key is // secret and needs to be obtained by signup 
+        const units = "imperial";
+        const apiKey = "18fc8e4d05d9cbbbc359023d0f76ead1";
+        const url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityname + "&units=" + units + "&APPID=" + apiKey;
+    
+    // this gets the data from Open WeatherPI
+    https.get(url, function(response){
+        console.log(response.statusCode);
+        
+        // gets individual items from Open Weather API
+        response.on("data", function(data){
+            const weatherData = JSON.parse(data);
+            const temp = weatherData.main.temp;
+            const city = weatherData.name;
+            const wind = weatherData.wind.speed;
+            const windDirection = weatherData.wind.deg;
+            const clouds = weatherData.clouds.all;
+            const weatherDescription = weatherData.weather[0].description;
+            const icon = weatherData.weather[0].icon;
+            const imageURL = "http://openweathermap.org/img/wn/" + icon + "@2x.png";
+            
+            // displays the output of the results
+            res.write("<h1> The weather is " + weatherDescription + "<h1>");
+            res.write("<h2>The Temperature in " + city + " " + zip + " is " + temp + " Degrees Fahrenheit<h2>");
+            res.write("<h2> Wind speed " + wind + " " + " wind direction is " + windDirection + " Degrees <h2/>")
+            res.write("<h2> Cloudiness is " + clouds + " <h2/>");
+            res.write("<img src=" + imageURL +">");
+            res.send();
+        });
+    });
+})
+
+})
 
 app.get("/compose", function(req, res){
   res.render("compose");
